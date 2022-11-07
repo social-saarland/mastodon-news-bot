@@ -9,7 +9,8 @@ const supabase = createClient();
   const { data, error } = await supabase
     .from(settings.db_table)
     .delete()
-    .eq("tooted", true);
+    .eq("tooted", true)
+    .select();
 
   console.log(`Deleted ${data?.length} entries`);
 
@@ -24,12 +25,25 @@ const supabase = createClient();
     minFreshnessDate.setHours(
       minFreshnessDate.getHours() - settings.min_freshness_hours
     );
+
+    console.log(`Cleaning up items older than ${minFreshnessDate}.`);
+    const { data: freshnessDataPubDate, error: freshnessErrorPubDate } =
+      await supabase
+        .from(settings.db_table)
+        .delete()
+        .filter("pub_date", "lte", minFreshnessDate.toISOString())
+        .eq("tooted", false)
+        .select();
+
+    console.log(`Cleaned up ${freshnessDataPubDate?.length} stale feed items.`);
+
     console.log(`Cleaning up items older than ${minFreshnessDate}.`);
     const { data: freshnessData, error: freshnessError } = await supabase
       .from(settings.db_table)
       .delete()
       .filter("created_at", "lte", minFreshnessDate.toISOString())
-      .eq("tooted", false);
+      .eq("tooted", false)
+      .select();
 
     console.log(`Cleaned up ${freshnessData?.length} stale feed items.`);
   }

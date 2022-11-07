@@ -13,7 +13,7 @@ const { parentPort } = require("worker_threads");
     .from(settings.db_table)
     .select("id,data")
     .is("tooted", false)
-    .order("created_at", { ascending: false })
+    .order("pub_date", { ascending: false })
     .limit(1);
 
   // Optional filter for feed items within certain freshness interval (hours)
@@ -26,7 +26,7 @@ const { parentPort } = require("worker_threads");
     console.log(
       `Applying freshness filter for items being from ${minFreshnessDate} or earlier.`
     );
-    query = query.filter("created_at", "gt", minFreshnessDate.toISOString());
+    query = query.filter("pub_date", "gt", minFreshnessDate.toISOString());
   }
 
   // Get an article that hasn't been tooted yet.
@@ -63,7 +63,8 @@ const { parentPort } = require("worker_threads");
     const { data: updatedData, error: errorOnUpdate } = await db
       .from(settings.db_table)
       .update({ tooted: true })
-      .match({ id });
+      .match({ id })
+      .select();
 
     if (errorOnUpdate) {
       throw errorOnUpdate;
